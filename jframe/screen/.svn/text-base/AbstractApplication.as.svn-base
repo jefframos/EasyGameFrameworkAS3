@@ -1,0 +1,70 @@
+package com.box3.screen 
+{
+	
+	/**
+	 * ...
+	 * 
+	 * @usage
+	 * ...
+	 * 
+	 * @author	Sandro Santos
+	 */
+
+	import com.box3.events.EventManager;
+	import com.box3.models.FlashVarsModel;
+	import com.box3.utils.GlobalUtil;
+	import flash.display.Sprite;
+	import flash.display.Stage;
+
+	public class AbstractApplication extends Sprite
+	{
+		// ___________________________________________________________________ CONSTANTS
+		
+		// ___________________________________________________________________ CLASS PROPERTIES
+		
+		private var _init												: Boolean = false;
+		
+		// ___________________________________________________________________ INSTANCE PROPERTIES
+		
+		// ___________________________________________________________________ GETTERS AND SETTERS
+		
+		// ___________________________________________________________________ CONSTRUCTOR
+		
+		public function AbstractApplication () {}
+		
+		public function setProperties(stage:Stage, stageWidth:int, stageHeight:int, flashVarsModel:FlashVarsModel):void
+		{
+			if (_init == false)
+			{
+				if (stage && stageWidth > 0 && stageHeight > 0 && flashVarsModel != null)
+				{
+					_init = true;
+					EventManager.init(stage);
+					GlobalUtil.init(stage, stageWidth, stageHeight, flashVarsModel);
+				}
+			}
+		}
+		
+		// ___________________________________________________________________ PUBLIC METHODS
+		
+		public function init():void
+		{
+			throw new Error("Criar a função init na classe principal do seu projeto.");
+		}
+		
+		public function build():void
+		{
+			throw new Error("Criar a função build na classe principal do seu projeto.");
+		}
+		
+		public function destroy():void
+		{
+			throw new Error("Criar a função destroy na classe principal do seu projeto.");
+		}
+		
+		// ___________________________________________________________________ PRIVATE METHODS
+		
+		// ___________________________________________________________________ EVENTS
+	}
+}
+

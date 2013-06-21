@@ -1,0 +1,193 @@
+/**
+ * ...
+ * >author		Sandro Santos
+ */
+
+package com.box3.screen
+{
+	import com.box3.events.ScreenEvent;
+	import flash.events.EventDispatcher;
+	
+	import flash.display.DisplayObjectContainer;
+
+	public class ScreenManager extends EventDispatcher
+	{
+		// ___________________________________________________________________ CONSTANTS
+		
+		// ___________________________________________________________________ CLASS PROPERTIES
+		
+		private var _screenManagerName									: String;
+		private var _previousScreen										: AbstractScreen;
+		private var _currentScreen										: AbstractScreen;
+		private var _nextScreen											: AbstractScreen;
+		private var _screens											: Array;
+		
+		// ___________________________________________________________________ INSTANCE PROPERTIES
+		
+		private var _view												: DisplayObjectContainer;
+		
+		// ___________________________________________________________________ GETTERS AND SETTERS
+		
+		public function get screenManagerName():String { return _screenManagerName; }
+		
+		public function get previousScreen():AbstractScreen { return _previousScreen; }
+		
+		public function get currentScreen():AbstractScreen { return _currentScreen; }
+		
+		public function get nextScreen():AbstractScreen { return _nextScreen; }
+		
+		public function get view():DisplayObjectContainer { return _view; }
+		
+		// ___________________________________________________________________ CONSTRUCTOR
+		
+		public function ScreenManager  (container:DisplayObjectContainer, screenManagerName:String)
+		{
+			_screens = [];
+			
+			_view = container;
+			
+			_screenManagerName = screenManagerName;
+		}
+		
+		// ___________________________________________________________________ PUBLIC METHODS
+		
+		public function destroy():void
+		{
+			for(var i:int = 0; i < _screens.length; ++i)
+			{
+				var screen:AbstractScreen = _screens[i];
+				_view.removeChild(screen);
+				screen = null;
+			}
+			_previousScreen = _currentScreen = _nextScreen = null;
+			_screens = null;
+			_view = null;
+		}
+		
+		public function addScreen(screen:AbstractScreen):Boolean
+		{
+			if ( !isRegistred(screen) )
+			{
+				screen.screenManager = this;
+				_screens[screen.screenName] = screen;
+				_view.addChild(screen);
+				return true;
+			}
+			
+			return false;
+		}
+		
+		public function change(screenName:String = null, force:Boolean = false):void
+		{
+			screenName = (screenName == "")?null:screenName;
+			
+			_nextScreen = (screenName == null)?null:_screens[screenName];
+			
+			if(_currentScreen && screenName == _currentScreen.screenName)
+			{
+				if(force == true)
+				{
+					hidePreviousScreen();
+				}
+			}
+			else
+			{
+				if(screenName == null)
+				{
+					hidePreviousScreen();
+				}
+				else
+				{
+					if(_currentScreen)
+					{
+						hidePreviousScreen();
+					}
+					else
+					{
+						showCurrentScreen();
+					}
+				}
+			}
+		}
+		
+		public function getScreen(screenName:String):AbstractScreen
+		{
+			try
+			{
+				return _screens[screenName];
+			}
+			catch (error:Error)
+			{
+				trace("Erro ao tentar encontrar a screen "+screenName);
+			}
+			
+			return null;
+		}
+		
+		// ___________________________________________________________________ PRIVATE METHODS
+		
+		private function hidePreviousScreen():void
+		{
+			if(_currentScreen != null)
+			{
+				_previousScreen = _currentScreen;
+				_currentScreen = null;
+				this.addEventListener(ScreenEvent.HIDE_FINISHED, onScreenEventHandler);
+				_previousScreen.hide();
+			}
+		}
+		
+		private function showCurrentScreen():void
+		{
+			_previousScreen = _currentScreen;
+			var maxIndex:int = _view.numChildren-1;
+			_currentScreen = _nextScreen;
+			_nextScreen = null;
+			if(_view.numChildren > 1)
+			{
+				if(_view.getChildIndex(_currentScreen) != maxIndex)
+				{
+					_view.setChildIndex(_currentScreen, maxIndex)
+				}
+			}
+			this.addEventListener(ScreenEvent.SHOW_FINISHED, onScreenEventHandler);
+			_currentScreen.show();
+		}
+		
+		private function isRegistred(screen:AbstractScreen):Boolean
+		{
+			_screens = (!_screens)?[]:_screens;
+			return _screens[screen.screenName] != undefined;
+		}
+		
+		// ___________________________________________________________________ EVENTS
+		
+		private function onScreenEventHandler(evt:ScreenEvent):void
+		{
+			switch(evt.type)
+			{
+				case ScreenEvent.SHOW_STARTED:
+					//
+					break;
+				case ScreenEvent.SHOW_FINISHED:
+					this.removeEventListener(evt.type, onScreenEventHandler);
+					break;
+				case ScreenEvent.HIDE_STARTED:
+					//
+					break;
+				case ScreenEvent.HIDE_FINISHED:
+					this.removeEventListener(evt.type, onScreenEventHandler);
+					//_previousScreen = null;
+					if(_nextScreen != null)
+					{
+						showCurrentScreen();
+					}
+					//else
+					//{
+						//_currentScreen = null;
+					//}
+					break;
+			}
+		}
+	}
+}
